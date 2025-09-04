@@ -5,9 +5,6 @@ on:
       - master
     paths-ignore:
       - '.github/workflows/**'
-      - 'Makefile.ipk'
-      - 'Makefile.sdk'
-      - 'Makefile.apk'
   workflow_dispatch:
 
 jobs:
@@ -17,10 +14,10 @@ jobs:
       CUR_VERSION: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Clone smartdns repo and extract version
         run: |
-          git clone https://github.com/xianren78/openwrt-smartdns.git smartdns-repo
+          git clone https://github.com/buzarini/openwrt-smartdns.git smartdns-repo
           cd smartdns-repo
           if [ -f Makefile.ipk ]; then
             VERSION=$(grep "^PKG_VERSION:=" Makefile.ipk | cut -d'=' -f2 | tr -d '[:space:]' || echo 'unknown')
@@ -35,19 +32,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch: x86_64
-            target: x86
-            subtarget: 64
-            package_arch: x86_64
-            goarch: x86_64
-            docker_tag: x86-64
-            rust_target: x86_64-unknown-linux-musl
           - arch: aarch64
             target: armsr
             subtarget: armv8
-            package_arch: aarch64_generic
+            package_arch: aarch64_cortex-a53
             goarch: aarch64
-            docker_tag: aarch64_generic
+            docker_tag: aarch64_cortex-a53
             rust_target: aarch64-unknown-linux-musl
       fail-fast: false
     runs-on: ubuntu-latest
@@ -57,7 +47,7 @@ jobs:
       PKG_VERSION: ${{ needs.get-version.outputs.CUR_VERSION }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set timezone
         run: |
           sudo timedatectl set-timezone "Asia/Shanghai"
@@ -136,7 +126,7 @@ jobs:
         run: |
           docker exec sdk-build-${{ matrix.arch }} sh -c "rm -rf feeds/packages/net/smartdns"
           docker exec sdk-build-${{ matrix.arch }} sh -c "rm -rf feeds/luci/applications/luci-app-smartdns"
-          docker exec sdk-build-${{ matrix.arch }} sh -c "git clone https://github.com/xianren78/openwrt-smartdns.git feeds/packages/net/smartdns"
+          docker exec sdk-build-${{ matrix.arch }} sh -c "git clone https://github.com/buzarini/openwrt-smartdns.git feeds/packages/net/smartdns"
           docker exec sdk-build-${{ matrix.arch }} sh -c "mv -f feeds/packages/net/smartdns/Makefile.ipk feeds/packages/net/smartdns/Makefile"
           docker exec sdk-build-${{ matrix.arch }} sh -c "git clone https://github.com/pymumu/luci-app-smartdns.git feeds/luci/applications/luci-app-smartdns"
           docker exec sdk-build-${{ matrix.arch }} sh -c "./scripts/feeds install -f smartdns"
@@ -386,7 +376,7 @@ jobs:
           echo "status=success" >> $GITHUB_OUTPUT
 
       - name: Upload to release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: steps.tag.outputs.status == 'success'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

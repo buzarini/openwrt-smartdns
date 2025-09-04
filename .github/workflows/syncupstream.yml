@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # 使用 PAT，触发下游 on: push 的编译工作流
           token: ${{ secrets.PAT_WORKFLOW }}
@@ -34,9 +34,9 @@ jobs:
       - name: Get latest commit SHA from smartdns repo
         run: |
           LATEST_SMARTDNS_COMMIT=$(curl -s -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/xianren78/smartdns/commits/master | jq -r '.sha // empty')
+            https://api.github.com/repos/pymumu/smartdns/commits/master | jq -r '.sha // empty')
           if [ -z "$LATEST_SMARTDNS_COMMIT" ]; then
-            echo "Failed to fetch latest commit from xianren78/smartdns" >&2
+            echo "Failed to fetch latest commit from pymumu/smartdns" >&2
             exit 1
           fi
           echo "LATEST_SMARTDNS_COMMIT=$LATEST_SMARTDNS_COMMIT" >> $GITHUB_ENV
@@ -78,14 +78,12 @@ jobs:
 
           # 依次尝试更新三个文件（存在才改）
           update_file Makefile.ipk
-          update_file Makefile.sdk
-          update_file Makefile.apk
 
           if [ "$UPDATE_NEEDED" = true ]; then
             git config user.name "GitHub Actions"
             git config user.email "actions@github.com"
             # 三个都 add（不存在不会报错）
-            git add Makefile.ipk Makefile.sdk Makefile.apk
+            git add Makefile.ipk
             git commit -m "$COMMIT_MESSAGE smartdns/webui to latest commits"
             git push origin HEAD:${{ github.ref_name }}
           else
